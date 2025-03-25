@@ -1,0 +1,254 @@
+{
+  "No Signal - History Based": {
+    "2": {
+      "avg_rounds": 19.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.5
+    },
+    "3": {
+      "avg_rounds": 64.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.4
+    },
+    "4": {
+      "avg_rounds": 91.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    },
+    "6": {
+      "avg_rounds": 358.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.6
+    },
+    "8": {
+      "avg_rounds": 2939.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    },
+    "10": {
+      "avg_rounds": 19110.5,
+      "convergence_rate": 0.95,
+      "blue_convergence_rate": 0.47368421052631576
+    },
+    "16": {
+      "avg_rounds": 95783.5,
+      "convergence_rate": 0.05,
+      "blue_convergence_rate": 0.0
+    },
+    "20": {
+      "avg_rounds": 100000.0,
+      "convergence_rate": 0.0,
+      "blue_convergence_rate": 0
+    }
+  },
+  "No Signal - Reward Based": {
+    "2": {
+      "avg_rounds": 16.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.35
+    },
+    "3": {
+      "avg_rounds": 33.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    },
+    "4": {
+      "avg_rounds": 37.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.5
+    },
+    "6": {
+      "avg_rounds": 102.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.4
+    },
+    "8": {
+      "avg_rounds": 141.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    },
+    "10": {
+      "avg_rounds": 118.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    },
+    "16": {
+      "avg_rounds": 371.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.7
+    },
+    "20": {
+      "avg_rounds": 814.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    }
+  },
+  "Mandatory Signal - History Based": {
+    "2": {
+      "avg_rounds": 12.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    },
+    "3": {
+      "avg_rounds": 21.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.5
+    },
+    "4": {
+      "avg_rounds": 22.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    },
+    "6": {
+      "avg_rounds": 71.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.6
+    },
+    "8": {
+      "avg_rounds": 10175.0,
+      "convergence_rate": 0.9,
+      "blue_convergence_rate": 0.5555555555555556
+    },
+    "10": {
+      "avg_rounds": 45062.5,
+      "convergence_rate": 0.55,
+      "blue_convergence_rate": 0.09090909090909091
+    },
+    "16": {
+      "avg_rounds": 80020.0,
+      "convergence_rate": 0.2,
+      "blue_convergence_rate": 0.5
+    },
+    "20": {
+      "avg_rounds": 100000.0,
+      "convergence_rate": 0.0,
+      "blue_convergence_rate": 0
+    }
+  },
+  "Mandatory Signal - Reward Based": {
+    "2": {
+      "avg_rounds": 10.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.25
+    },
+    "3": {
+      "avg_rounds": 16.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    },
+    "4": {
+      "avg_rounds": 18.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.5
+    },
+    "6": {
+      "avg_rounds": 36.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.5
+    },
+    "8": {
+      "avg_rounds": 69.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    },
+    "10": {
+      "avg_rounds": 88.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    },
+    "16": {
+      "avg_rounds": 286.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.2
+    },
+    "20": {
+      "avg_rounds": 372.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    }
+  },
+  "Optional Signal - History Based": {
+    "2": {
+      "avg_rounds": 12.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    },
+    "3": {
+      "avg_rounds": 15.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    },
+    "4": {
+      "avg_rounds": 32.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    },
+    "6": {
+      "avg_rounds": 74.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    },
+    "8": {
+      "avg_rounds": 165.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.4
+    },
+    "10": {
+      "avg_rounds": 682.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    },
+    "16": {
+      "avg_rounds": 11363.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.6
+    },
+    "20": {
+      "avg_rounds": 49385.5,
+      "convergence_rate": 0.7,
+      "blue_convergence_rate": 0.6428571428571429
+    }
+  },
+  "Optional Signal - Reward Based": {
+    "2": {
+      "avg_rounds": 12.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.45
+    },
+    "3": {
+      "avg_rounds": 21.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    },
+    "4": {
+      "avg_rounds": 21.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.35
+    },
+    "6": {
+      "avg_rounds": 58.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.3
+    },
+    "8": {
+      "avg_rounds": 64.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.65
+    },
+    "10": {
+      "avg_rounds": 177.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.25
+    },
+    "16": {
+      "avg_rounds": 506.0,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.55
+    },
+    "20": {
+      "avg_rounds": 746.5,
+      "convergence_rate": 1.0,
+      "blue_convergence_rate": 0.4
+    }
+  }
+}

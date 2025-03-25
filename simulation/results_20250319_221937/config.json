@@ -1,0 +1,15 @@
+{
+  "agent_sizes": [
+    2,
+    3,
+    4,
+    6,
+    8,
+    10,
+    16,
+    20
+  ],
+  "runs_per_scenario": 20,
+  "max_rounds": 100000,
+  "timestamp": "20250319_221937"
+}

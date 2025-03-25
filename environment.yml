@@ -1,0 +1,11 @@
+name: agent_simulation
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - matplotlib
+  - pip
+  - pip:
+    - ipykernel  # Optional, for running in Jupyter 
