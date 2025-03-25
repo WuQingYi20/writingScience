@@ -13,82 +13,100 @@
 
 \onehalfspacing
 
-\title{Signal Choice and Group Structure in Norm Formation: A Computational Approach to Coordination Dynamics}
-\author{Your Name}
-\date{\today}
+\title{Exploratory Computational Models Towards Understanding Human Decision-Making: Signal Choice and Group Structure in Norm Formation}
+\author{Yifan Wu}
+\date{}
 
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
-\paragraph{Status Quo:} Pedestrians naturally form lanes on crowded streets without explicit rules—a prime example of descriptive norms that emerge through unspoken agreements \citep{Baronchelli2018}. In modern society, such coordination occurs in groups ranging from small teams to large online communities, with research showing that both group size and communication methods influence coordination outcomes \citep{Balliet2010, Centola2015}.
+\paragraph{Research Motivation:} Understanding the fundamental mechanisms of human decision-making remains a central challenge in cognitive and social sciences. This exploratory study examines computational models that may help illuminate basic human decision processes in social coordination contexts. By systematically varying decision strategies and communication structures, we aim to identify computational patterns that could inform future empirical research with human participants.
 
-\paragraph{Problem:} Despite advances in understanding individual factors affecting coordination, their combined effects remain poorly understood. When groups grow larger, coordination becomes exponentially more difficult—like musicians playing without a conductor, each additional player increases the challenge of staying in harmony. Current models fail to explain how communication strategies interact with group structure to facilitate or impede coordination.
-
-\paragraph{Our Contribution:} We demonstrate how signal choice freedom creates predictable coordination dynamics based on group structure and learning strategy. Using agent-based simulations that function as "coordination laboratories," we identify mechanisms through which different signaling options interact with group size to determine coordination success. Our findings reveal an unexpected "adaptability advantage" that challenges conventional wisdom about social coordination.
+\paragraph{Research Question:} As a preliminary exploration towards understanding human decision-making fundamentals, this study examines how signal freedom and group size jointly shape coordination dynamics. We investigate: (1) the relationship between signal conditions (mandatory, optional, or none) and coordination success across varying group sizes, and (2) how different learning strategies (history-based versus reward-based) modify this relationship. These strategies represent simplified approximations of human cognitive processes—history-based modeling reflects declarative memory utilization, while reward-based approaches capture procedural learning mechanisms as proposed in dual-process theories of human cognition \citep{Daw2005}.
 
 \section{Materials and Methods}
-\paragraph{Experimental Design:} We developed a social coordination "game" where agents (like people at an intersection) must choose between two options (red or blue paths). Coordination success occurs when paired agents choose the same option. We tested two fundamentally different learning strategies across groups of 2-20 agents:
+\paragraph{Experimental Design:} We implemented a binary-choice coordination game where agents select between two options (red or blue). Coordination success occurs when paired agents select identical options. We systematically varied group size (2, 3, 4, 6, 8, 10, 16, and 20 agents) to analyze coordination dynamics across different scales.
+
+\paragraph{Agent Learning Strategies:} We implemented two learning strategies as simplified models of potential human cognitive processes:
 
 \begin{enumerate}
-    \item \textbf{History-Based Agents}: Similar to traditional economists, these agents track statistics of past successes and make decisions based on established patterns.
+    \item \textbf{History-Based Agents}: These agents maintain statistical records of past interaction outcomes and base decisions on pattern recognition, using accumulated historical data to inform current choices. 
     
-    \item \textbf{Reward-Based Agents}: Like adaptable entrepreneurs, these agents rapidly adjust their behavior through immediate feedback, modifying choice probabilities after each interaction.
+    \item \textbf{Reward-Based Agents}: These agents implement reinforcement learning principles, modifying choice probabilities through immediate feedback after each interaction.
 \end{enumerate}
 
-This strategic comparison builds on theoretical work by \citet{Claus1998}, who showed that adaptation mechanisms significantly affect coordination outcomes in cooperative settings.
-
-\paragraph{Communication Conditions:} We tested three distinct communication scenarios:
+\paragraph{Communication Conditions:} We implemented three communication scenarios:
 \begin{enumerate}
-    \item \textbf{No Signal}: Like strangers passing without eye contact
-    \item \textbf{Mandatory Signal}: Similar to drivers using turn signals
-    \item \textbf{Optional Signal}: Comparable to pedestrians who may or may not gesture their intentions
+    \item \textbf{No Signal}: Agents make choices without prior communication.
+    
+    \item \textbf{Mandatory Signal}: All agents must communicate their intended choice before acting.
+    
+    \item \textbf{Optional Signal}: Agents can choose whether to signal their intentions, creating information asymmetries.
 \end{enumerate}
 
-Our optional signaling condition draws from \citet{Skyrms2010}, who demonstrated how optional information sharing creates unique coordination equilibria.
-
-\paragraph{Measurement:} Using a rotation-based matching system, we tracked: (1) coordination speed (rounds to convergence), (2) success rate (proportion achieving coordination), and (3) choice patterns across 100,000 possible interaction rounds.
+\paragraph{Measurement and Analysis:} Using a rotation-based matching system that systematically pairs all agents over time, we tracked three metrics across 100,000 possible interaction rounds:
+\begin{enumerate}
+    \item \textbf{Coordination speed}: Rounds required to reach convergence on a shared norm
+    \item \textbf{Success rate}: Proportion of groups achieving coordination within the time limit
+    \item \textbf{Norm selection}: Distribution of final coordinated choices (blue vs. red)
+\end{enumerate}
 
 \section{Results}
 
-\paragraph{Finding 1: Group Size Effects} In small groups (2-4 agents), both strategies achieved coordination within 100 rounds—like small teams quickly establishing workplace norms. As group size increased, history-based agents showed exponential coordination failure, never converging in 20-agent groups with mandatory signaling. In contrast, reward-based agents remained effective even in large groups, achieving coordination in 372 rounds with mandatory signals—over 250× faster than their history-based counterparts.
+\paragraph{Finding 1: Group Size Effects} 
+Group size effects on coordination varied systematically based on learning strategy implementation. In small groups (2-4 agents), both strategies achieved coordination within 100 rounds. As group size increased, performance divergence became quantitatively significant.
 
-\paragraph{Finding 2: Communication Impact} Optional signaling dramatically improved history-based agents' performance in larger groups. With 16 agents, optional signaling reduced convergence time by 88\% (11,363 vs. 95,783 rounds) compared to no signaling—like allowing meeting participants to use hand-raising or remain silent based on their confidence. Reward-based agents performed best with mandatory signaling (69 rounds vs. 141 with no signals in 8-agent groups).
+History-based agents exhibited exponential increases in coordination time with larger groups, reaching 100,000 rounds without convergence in 20-agent groups under both no-signal and mandatory signal conditions (0\% success rate). Reward-based agents maintained consistent coordination efficiency in large groups, achieving convergence in 372 rounds with mandatory signals in 20-agent groups—a 250-fold efficiency difference compared to history-based counterparts.
 
-\paragraph{Finding 3: Success Rates} Reward-based agents achieved 100\% coordination success across all group sizes and communication conditions, demonstrating remarkable adaptability. History-based agents' success declined sharply with group size, reaching complete failure (0\% success) in 20-agent groups under no-signal and mandatory-signal conditions, while still achieving 70\% success with optional signaling.
+\paragraph{Finding 2: Communication Impact} 
+Communication structure effects interacted with both group size and learning strategy variables. Optional signaling improved history-based agents' performance in larger groups. With 16 agents, optional signaling reduced convergence time by 88\% (11,363 vs. 95,783 rounds) compared to no signaling conditions.
 
-\paragraph{Finding 4: Signal Strategy Evolution} In optional conditions, agents evolved sophisticated communication patterns. History-based agents initially used signals 50\% of the time, but successful groups shifted toward consistent patterns based on past outcomes. Reward-based agents dynamically adjusted signaling probability based on real-time feedback, optimizing information exchange.
+Reward-based agents performed optimally with mandatory signaling across all group sizes, achieving coordination in 69 rounds versus 141 with no signals in 8-agent groups.
+
+\paragraph{Finding 3: Success Rates} 
+Coordination reliability measurements revealed systematic strategy differences. Reward-based agents achieved 100\% coordination success across all tested group sizes and communication conditions. History-based agents exhibited declining success rates as group size increased, reaching 0\% success in 20-agent groups under both no-signal and mandatory-signal conditions.
+
+In large-group environments (20 agents), optional signaling enabled history-based agents to maintain a 70\% success rate.
+
+\paragraph{Finding 4: Norm Selection Patterns} 
+Final norm selection (blue vs. red convergence) showed no systematic bias across conditions. The blue choice convergence rate ranged from 0.25 to 0.70 across different scenarios, with no clear pattern related to group size, signal condition, or learning strategy.
 
 \section{Discussion}
 
-\paragraph{Key Insight:} Our results reveal a critical "adaptability advantage" in social coordination that challenges traditional views. Like comparing GPS navigation to paper maps, reward-based learning easily recalculates routes when obstacles appear, while history-based approaches struggle to update established patterns.
+\paragraph{Implications for Human Decision-Making Models:} 
+This exploratory study offers preliminary insights into potential computational mechanisms that may underlie human coordination behavior. The stark performance differences between reward-based and history-based learning strategies suggest that human coordination might employ multiple cognitive systems with varying effectiveness depending on context.
 
-The superior performance of reward-based agents stems from three critical abilities:
+\paragraph{Adaptation Capacity and Coordination:} 
+The data demonstrate a clear relationship between adaptation capacity and coordination efficiency. Reward-based learning exhibits superior coordination in complex environments, while history-based approaches show limitations when updating established patterns. These differences may parallel human decision-making under varying cognitive loads and informational complexity.
 
-\begin{enumerate}
-    \item \textbf{Rapid adaptation} without historical constraints
-    \item \textbf{Quick recovery} from coordination failures
-    \item \textbf{Dynamic signaling} strategies optimizing information exchange
-\end{enumerate}
+\paragraph{Signal Flexibility Effects:} 
+Optional signaling consistently improved coordination for history-based agents in larger groups. With 10 agents, optional signaling reduced convergence time by 96\% compared to mandatory signaling conditions (682.5 vs. 45,062.5 rounds) for history-based agents.
 
-\paragraph{Practical Applications:} These findings offer direct guidance for designing effective coordination systems:
-
-\begin{enumerate}
-    \item Design feedback mechanisms that enable immediate adaptation rather than relying exclusively on historical patterns
-    \item Implement flexible communication options that allow members to signal strategically
-    \item Create interaction structures that facilitate rapid learning from mistakes
-\end{enumerate}
-
-The surprising finding that optional signaling significantly enhances coordination success for history-based agents in larger groups suggests that organizations facing coordination challenges should prioritize communication flexibility over rigid protocols.
+This effect was not observed for reward-based agents, where mandatory signaling provided optimal coordination efficiency.
 
 \section{Conclusion}
 
-Our research demonstrates that successful social coordination depends critically on matching learning strategies to group characteristics. Like choosing between different navigation tools for different journey types, groups should adopt coordination mechanisms appropriate to their size and complexity.
+\paragraph{Key Findings as a Foundation for Human Decision Models:} 
+This exploratory research demonstrates potential computational mechanisms that might underlie human coordination behavior. By systematically varying learning strategies and communication structures across different group sizes, we have identified interaction patterns that may inform models of human decision-making in coordination contexts. Three primary findings emerge:
 
-Reward-based learning consistently outperforms history-based approaches as group complexity increases. Optional signaling provides unique advantages for history-dependent systems, creating convergence pathways that would otherwise remain blocked—like emergency exits in a crowded building.
+\begin{enumerate}
+    \item Learning strategy significantly impacts coordination efficiency, with reward-based learning providing a 250-fold coordination advantage in large groups.
+    
+    \item Optional signaling creates coordination pathways that partially compensate for limited adaptation capacity, enabling a 70\% success rate for history-based agents in large groups compared to 0\% under fixed signaling conditions.
+    
+    \item Coordination performance depends on the match between learning mechanisms and communication structures.
+\end{enumerate}
 
-These insights can inform the design of everything from team collaboration tools to social media platforms, optimizing how humans and AI systems coordinate in increasingly complex social environments. Future research should test these computational findings in human experiments to determine whether people naturally gravitate toward more effective learning and signaling strategies across different contexts.
+\paragraph{Limitations and Future Directions:} 
+As an exploratory computational study, this research has inherent limitations in directly characterizing human behavior. Future research should address these limitations through:
+
+\begin{enumerate}
+    \item \textbf{Human validation studies}: Conducting parallel human experiments to calibrate computational models against actual behavioral data
+    
+    \item \textbf{Hybrid model development}: Creating integrated models incorporating both history-based and reward-based components to better approximate human cognitive processes
+\end{enumerate}
 
 \bibliographystyle{apalike}
 \begin{thebibliography}{10}
@@ -97,6 +115,11 @@ These insights can inform the design of everything from team collaboration tools
 Balliet, D. (2010).
 \newblock Communication and cooperation in social dilemmas: A meta-analytic review.
 \newblock \emph{Journal of Conflict Resolution, 54}(1), 39--57.
+
+\bibitem[Barcelo and Capraro(2015)]{BarceloCapraro2015}
+Barcelo, H., \& Capraro, V. (2015).
+\newblock Group size effect on cooperation in one-shot social dilemmas.
+\newblock \emph{Scientific Reports, 5}, 7937.
 
 \bibitem[Baronchelli(2018)]{Baronchelli2018}
 Baronchelli, A. (2018).
@@ -113,20 +136,15 @@ Claus, B., \& Boutilier, C. (1998).
 \newblock The dynamics of reinforcement learning in cooperative multiagent systems.
 \newblock \emph{AAAI/IAAI}, 746--752.
 
-\bibitem[Nowak(2006)]{Nowak2006}
-Nowak, M. A. (2006).
-\newblock Five rules for the evolution of cooperation.
-\newblock \emph{Science, 314}(5805), 1560--1563.
+\bibitem[Daw et al.(2005)]{Daw2005}
+Daw, N. D., Niv, Y., \& Dayan, P. (2005).
+\newblock Uncertainty-based competition between prefrontal and dorsolateral striatal systems for behavioral control.
+\newblock \emph{Nature Neuroscience, 8}(12), 1704--1711.
 
-\bibitem[Ostrom(2000)]{Ostrom2000}
-Ostrom, E. (2000).
-\newblock Collective action and the evolution of social norms.
-\newblock \emph{Journal of Economic Perspectives, 14}(3), 137--158.
-
-\bibitem[Skyrms(2010)]{Skyrms2010}
-Skyrms, B. (2010).
-\newblock Signals: Evolution, Learning, and Information.
-\newblock Oxford University Press.
+\bibitem[Flache et al.(2017)]{Flache2017}
+Flache, A., Mäs, M., Feliciani, T., Chattoe-Brown, E., Deffuant, G., Huet, S., \& Lorenz, J. (2017).
+\newblock Models of social influence: Towards the next frontiers.
+\newblock \emph{Journal of Artificial Societies and Social Simulation, 20}(4), 2.
 
 \end{thebibliography}
 

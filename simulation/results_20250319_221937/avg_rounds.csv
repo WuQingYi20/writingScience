@@ -1,9 +1,0 @@
-Agent Size,No Signal - History Based,No Signal - Reward Based,Mandatory Signal - History Based,Mandatory Signal - Reward Based,Optional Signal - History Based,Optional Signal - Reward Based
-2,21.5,21.0,25.0,11.5,22.0,14.5
-3,49.5,25.5,37.0,23.5,36.5,16.0
-4,125.5,40.5,116.5,30.0,80.5,27.0
-6,436.0,82.5,468.5,63.0,452.5,79.0
-8,2090.0,172.5,2077.0,122.5,2645.5,138.5
-10,9279.5,164.5,9137.0,160.5,17706.5,247.0
-16,93010.0,438.0,91301.0,456.5,88163.0,531.5
-20,96374.0,616.0,96331.5,650.0,100000.0,1630.0
