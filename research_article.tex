@@ -22,91 +22,77 @@
 \maketitle
 
 \section{Introduction}
-\paragraph{Research Motivation:} Understanding the fundamental mechanisms of human decision-making remains a central challenge in cognitive and social sciences. This exploratory study examines computational models that may help illuminate basic human decision processes in social coordination contexts. By systematically varying decision strategies and communication structures, we aim to identify computational patterns that could inform future empirical research with human participants.
 
-\paragraph{Research Question:} As a preliminary exploration towards understanding human decision-making fundamentals, this study examines how signal freedom and group size jointly shape coordination dynamics. We investigate: (1) the relationship between signal conditions (mandatory, optional, or none) and coordination success across varying group sizes, and (2) how different learning strategies (history-based versus reward-based) modify this relationship. These strategies represent simplified approximations of human cognitive processes—history-based modeling reflects declarative memory utilization, while reward-based approaches capture procedural learning mechanisms as proposed in dual-process theories of human cognition \citep{Daw2005}.
+Effective coordination is essential for human collective endeavours, but the mechanisms enabling groups to converge on shared strategies, particularly as scale and communication opportunities vary, remain elusive. While both group size and signaling possibilities influence coordination, their interaction with different individual learning approaches is poorly characterized. 
+
+Here, we use agent-based simulations of a pure coordination game as a computational testbed to systematically dissect these factors. To explore this parameter space, we simulated agents navigating coordination challenges across varying group sizes (N=2-20) under three distinct communication protocols: no signals, mandatory truthful signals, or optional signals. Agents adopted one of two learning heuristics—either tracking historical success rates or employing reinforcement learning—representing simplified proxies for cognitive strategies. 
+
+This preliminary computational investigation aims to establish a foundational framework for understanding coordination dynamics, identifying critical thresholds and interaction effects between group size, signal freedom, and learning type. The results are intended to generate specific hypotheses and delineate key variables for subsequent empirical investigation in human groups, facilitating comparison between the outcomes predicted by these computational agents and observed human behaviour to pinpoint potential unique mechanisms in human social coordination.
 
 \section{Materials and Methods}
-\paragraph{Experimental Design:} We implemented a binary-choice coordination game where agents select between two options (red or blue). Coordination success occurs when paired agents select identical options. We systematically varied group size (2, 3, 4, 6, 8, 10, 16, and 20 agents) to analyze coordination dynamics across different scales.
+\paragraph{Simulation Framework: Multi-Agent Coordination Game}
+We employed an agent-based simulation framework to investigate the emergence of coordination norms within groups. The simulation implements a dyadic, pure coordination game where programmed agents face a binary choice task in each interaction round. Agents select one of two options, arbitrarily labeled 'red' and 'blue'. The objective for agents is to match the choice of their interaction partner.
 
-\paragraph{Agent Learning Strategies:} We implemented two learning strategies as simplified models of potential human cognitive processes:
+\paragraph{Interaction Dynamics and Convergence}
+Interactions occurred between pairs of agents within designated groups. We systematically varied the group size (N = 2, 3, 4, 6, 8, 10, 16, and 20 agents) to examine scaling effects on coordination dynamics. Within each round, agents were paired according to a rotation-based matching protocol, ensuring that each agent sequentially interacted with every other unique agent in the group over successive rounds before pairings repeat.
+
+Coordination success for a pair was defined as both agents selecting the identical color option in a given round; selection of different colors constituted coordination failure. The simulation proceeded in discrete rounds. System-level convergence, signifying the establishment of a group norm, was formally defined as the state where all agents within the group unanimously selected the same color during a single interaction round. Simulations were run until convergence was achieved or a maximum round limit of 100,000 rounds was reached.
+
+\paragraph{Agent Learning Strategies}
+Two distinct learning strategies were implemented to model different potential cognitive mechanisms for adaptation in coordination tasks:
 
 \begin{enumerate}
-    \item \textbf{History-Based Agents}: These agents maintain statistical records of past interaction outcomes and base decisions on pattern recognition, using accumulated historical data to inform current choices. 
+    \item \textbf{History-Based (HB) Agents}: These agents relied on accumulated experiential data. Each HB agent maintained an internal record of the historical success rate achieved with each color choice (red vs. blue) based on outcomes from its past interactions. Decisions in subsequent rounds were guided by these learned success rates, with agents probabilistically choosing the color with the higher success rate. Parameters potentially affecting HB performance, such as the handling of initial memory or history weighting, were optimized based on preliminary analyses to ensure robust performance baseline.
     
-    \item \textbf{Reward-Based Agents}: These agents implement reinforcement learning principles, modifying choice probabilities through immediate feedback after each interaction.
+    \item \textbf{Reward-Based (RB) Agents}: These agents adapted their behavior using reinforcement learning principles. Specifically, the probability of selecting each color was updated after every interaction based on the outcome (success or failure). This update followed a standard delta rule, reinforcing choices that led to successful coordination. Key hyperparameters, notably the learning rate, were carefully tuned; the optimal value, determined through preliminary parameter sweeps assessing performance across a range of values tested at intervals of 0.1, was used in the main experimental simulations.
 \end{enumerate}
 
-\paragraph{Communication Conditions:} We implemented three communication scenarios:
+\paragraph{Communication Conditions:} 
+To investigate the influence of information exchange on coordination, we implemented three distinct communication protocols governing agent interactions prior to action selection:
+
 \begin{enumerate}
-    \item \textbf{No Signal}: Agents make choices without prior communication.
+    \item \textbf{No Signal (NS)}: In this baseline condition, agents selected their actions (red or blue) without any form of communication prior to the choice.
     
-    \item \textbf{Mandatory Signal}: All agents must communicate their intended choice before acting.
+    \item \textbf{Mandatory Signal (MS)}: Under this protocol, all agents were obligated to truthfully signal their intended choice to their designated partner before the action selection phase of each round. This signal accurately reflected the agent's subsequent choice.
     
-    \item \textbf{Optional Signal}: Agents can choose whether to signal their intentions, creating information asymmetries.
+    \item \textbf{Optional Signal (OS)}: This condition introduced strategic choice regarding information transmission. Agents could decide whether or not to signal their intended choice prior to action selection, creating potential information asymmetries within pairs. The initial probability for an agent to send a signal was set to 0.5. Subsequently, the decision to signal was dynamically updated based on the agent's core learning mechanism: HB agents adapted their signaling propensity based on the historical success associated with signaling versus not signaling, while RB agents reinforced signaling decisions that correlated with successful coordination outcomes.
 \end{enumerate}
 
-\paragraph{Measurement and Analysis:} Using a rotation-based matching system that systematically pairs all agents over time, we tracked three metrics across 100,000 possible interaction rounds:
-\begin{enumerate}
-    \item \textbf{Coordination speed}: Rounds required to reach convergence on a shared norm
-    \item \textbf{Success rate}: Proportion of groups achieving coordination within the time limit
-    \item \textbf{Norm selection}: Distribution of final coordinated choices (blue vs. red)
-\end{enumerate}
+\paragraph{Experimental Design and Parameters}
+The core experimental design involved systematically varying three factors: group size (8 levels: 2 to 20), agent learning strategy (HB vs. RB), and communication condition (NS, MS, OS). For each condition, 100 independent simulations were performed. Performance metrics, including convergence speed and success rate, were recorded for each simulation run.
+
+\paragraph{Analytical Approach:} To identify critical group size thresholds where coordination significantly slowed, we analyzed the relationship between group size (Agent Size) and average convergence rounds. This involved plotting convergence rounds on a logarithmic scale against group size (linear scale) to visually detect sharp increases in slope ('elbow points'), particularly for conditions where the convergence rate also dropped below 1.0. The modulating role of communication was assessed by comparing convergence performance (speed and rate) across the three signal conditions (No Signal, Mandatory, Optional) within each learning strategy.
 
 \section{Results}
 
-\paragraph{Finding 1: Group Size Effects} 
-Group size effects on coordination varied systematically based on learning strategy implementation. In small groups (2-4 agents), both strategies achieved coordination within 100 rounds. As group size increased, performance divergence became quantitatively significant.
+\paragraph{Group Size Effects} 
+Group size significantly impacted coordination dynamics, with performance critically dependent on the agent learning strategy. Increasing group size (N) generally led to slower convergence across all conditions. However, this effect was dramatically more pronounced for History-Based (HB) agents, which exhibited substantially increased convergence times and markedly reduced convergence rates, particularly for N ≥ 8, often failing to converge within the simulation limit under No Signal and Mandatory Signal protocols. In contrast, Reward-Based (RB) agents demonstrated significantly greater robustness to scaling, maintaining faster convergence speeds and near-perfect convergence rates even in larger groups. This highlights critical thresholds in group size beyond which coordination becomes notably challenging, especially for HB agents.
 
-History-based agents exhibited exponential increases in coordination time with larger groups, reaching 100,000 rounds without convergence in 20-agent groups under both no-signal and mandatory signal conditions (0\% success rate). Reward-based agents maintained consistent coordination efficiency in large groups, achieving convergence in 372 rounds with mandatory signals in 20-agent groups—a 250-fold efficiency difference compared to history-based counterparts.
+\paragraph{Communication Impact} 
+Communication protocols modulated convergence speed and success, interacting significantly with the underlying learning strategy. Compared to the No Signal baseline, both Mandatory Signal (MS) and Optional Signal (OS) conditions generally facilitated faster convergence for RB agents. However, for HB agents, the impact of communication varied starkly. The MS condition severely hindered coordination for HB agents at larger group sizes, leading to extremely slow convergence and low convergence rates. Conversely, the OS condition proved most beneficial for HB agents, substantially mitigating the detrimental effects of increased group size observed under both NS and MS conditions, leading to comparatively faster and more reliable convergence.
 
-\paragraph{Finding 2: Communication Impact} 
-Communication structure effects interacted with both group size and learning strategy variables. Optional signaling improved history-based agents' performance in larger groups. With 16 agents, optional signaling reduced convergence time by 88\% (11,363 vs. 95,783 rounds) compared to no signaling conditions.
-
-Reward-based agents performed optimally with mandatory signaling across all group sizes, achieving coordination in 69 rounds versus 141 with no signals in 8-agent groups.
-
-\paragraph{Finding 3: Success Rates} 
-Coordination reliability measurements revealed systematic strategy differences. Reward-based agents achieved 100\% coordination success across all tested group sizes and communication conditions. History-based agents exhibited declining success rates as group size increased, reaching 0\% success in 20-agent groups under both no-signal and mandatory-signal conditions.
-
-In large-group environments (20 agents), optional signaling enabled history-based agents to maintain a 70\% success rate.
-
-\paragraph{Finding 4: Norm Selection Patterns} 
-Final norm selection (blue vs. red convergence) showed no systematic bias across conditions. The blue choice convergence rate ranged from 0.25 to 0.70 across different scenarios, with no clear pattern related to group size, signal condition, or learning strategy.
+\paragraph{Learning Strategy Performance} 
+Reward-Based learning consistently outperformed History-Based learning in achieving coordination. Across the range of group sizes and communication conditions investigated, RB agents achieved convergence significantly faster and with substantially higher reliability (convergence rates) than HB agents. The performance disparity between the two strategies became increasingly pronounced as group size increased, indicating the superior efficiency and scalability of the RB reinforcement learning approach for this coordination task compared to the experiential record-keeping of the HB strategy.
 
 \section{Discussion}
 
-\paragraph{Implications for Human Decision-Making Models:} 
-This exploratory study offers preliminary insights into potential computational mechanisms that may underlie human coordination behavior. The stark performance differences between reward-based and history-based learning strategies suggest that human coordination might employ multiple cognitive systems with varying effectiveness depending on context.
+\paragraph{Learning Strategy Effectiveness} 
+Our simulations reveal that reward-based (RB) learning mechanisms offer a significant advantage over history-based (HB) strategies in achieving group coordination, demonstrating superior scalability as group size increases. This suggests that reinforcement processes, which directly link actions to successful outcomes, are more robust for navigating the escalating complexity of larger collective action problems compared to strategies relying solely on past success rates.
 
-\paragraph{Adaptation Capacity and Coordination:} 
-The data demonstrate a clear relationship between adaptation capacity and coordination efficiency. Reward-based learning exhibits superior coordination in complex environments, while history-based approaches show limitations when updating established patterns. These differences may parallel human decision-making under varying cognitive loads and informational complexity.
+\paragraph{Communication-Learning Strategy Interaction} 
+The role of communication highlights a critical interaction with learning strategy. Mandatory signaling unexpectedly hindered coordination for HB agents, potentially by locking them into suboptimal early choices or amplifying noise in larger groups. Conversely, optional signaling provided a crucial adaptive advantage, substantially mitigating the scaling challenges faced by HB agents. This flexibility likely arises because the decision to signal is itself learned, adapting alongside the primary coordination choice based on the agent's core learning mechanism (reward or history).
 
-\paragraph{Signal Flexibility Effects:} 
-Optional signaling consistently improved coordination for history-based agents in larger groups. With 10 agents, optional signaling reduced convergence time by 96\% compared to mandatory signaling conditions (682.5 vs. 45,062.5 rounds) for history-based agents.
+\paragraph{Optional Signaling Dynamics} 
+However, the dynamics of optional signaling warrant closer examination. While beneficial for HB agents, particularly in establishing initial local convergence, the added layer of converging on both an action and a signaling policy might introduce complexities that hinder reaching rapid final consensus across the entire group. This could explain why optional signaling, despite its benefits, was not necessarily the most efficient protocol for RB agents under all conditions, suggesting potential trade-offs between adaptive flexibility and speed to global convergence.
 
-This effect was not observed for reward-based agents, where mandatory signaling provided optimal coordination efficiency.
+\paragraph{Implications for Human Coordination} 
+These findings prompt questions regarding human coordination. It remains unclear how human cognition aligns the decision-making processes for signaling versus acting, or how individuals integrate potentially diverse or conflicting signals within a group. Investigating whether the flexible, adaptive signaling observed here translates to optimal coordination in human groups, given their richer cognitive and social landscapes, represents a key avenue for future empirical research comparing these computational predictions with human behaviour.
+
+In essence, this work underscores the efficacy of reinforcement mechanisms for collective action and emphasizes that the effectiveness of communication protocols is not absolute but critically depends on their interplay with the underlying learning strategies employed by individuals within the group.
 
 \section{Conclusion}
 
-\paragraph{Key Findings as a Foundation for Human Decision Models:} 
-This exploratory research demonstrates potential computational mechanisms that might underlie human coordination behavior. By systematically varying learning strategies and communication structures across different group sizes, we have identified interaction patterns that may inform models of human decision-making in coordination contexts. Three primary findings emerge:
-
-\begin{enumerate}
-    \item Learning strategy significantly impacts coordination efficiency, with reward-based learning providing a 250-fold coordination advantage in large groups.
-    
-    \item Optional signaling creates coordination pathways that partially compensate for limited adaptation capacity, enabling a 70\% success rate for history-based agents in large groups compared to 0\% under fixed signaling conditions.
-    
-    \item Coordination performance depends on the match between learning mechanisms and communication structures.
-\end{enumerate}
-
-\paragraph{Limitations and Future Directions:} 
-As an exploratory computational study, this research has inherent limitations in directly characterizing human behavior. Future research should address these limitations through:
-
-\begin{enumerate}
-    \item \textbf{Human validation studies}: Conducting parallel human experiments to calibrate computational models against actual behavioral data
-    
-    \item \textbf{Hybrid model development}: Creating integrated models incorporating both history-based and reward-based components to better approximate human cognitive processes
-\end{enumerate}
+Our simulations reveal that reinforcement-based learning provides a substantial advantage over history-based strategies for achieving coordination, particularly as group size increases. The effectiveness of communication is not absolute but interacts critically with the underlying learning mechanism employed by individuals. While mandatory signaling can impede coordination for less adaptive learners, optional signaling offers crucial flexibility, allowing the signalling decision itself to become part of the adaptive process. These findings underscore that successful large-scale coordination likely relies on the dynamic interplay between reinforcement-like learning and adaptive communication strategies. Understanding these interactions provides a vital baseline for dissecting the specific cognitive and social mechanisms driving complex human collective action.
 
 \bibliographystyle{apalike}
 \begin{thebibliography}{10}
