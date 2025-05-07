@@ -693,6 +693,7 @@ def plot_results(results):
 def main():
     # This main is for testing environment.py directly.
     # It needs to be updated to create example `experiment_setups`.
+    print("--- INSIDE main() function ---")
     print("Running example with heterogeneous agents in environment.py main...")
 
     # Example Experiment Setups
@@ -745,4 +746,5 @@ def main():
 
 
 if __name__ == "__main__":
+    print("--- EXECUTING __main__ block ---")
     main() 
