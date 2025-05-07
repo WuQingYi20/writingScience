@@ -41,10 +41,11 @@ class Agent:
 
 # History-Based Agent Implementation
 class HistoryBasedAgent(Agent):
-    def __init__(self, name: str):
+    def __init__(self, name: str, pseudo_count: float = 2.0, learning_step_follow: float = 0.5):
         super().__init__(name)
         # Pseudocounts for initial beliefs
-        self.PSEUDO_COUNT = 2.0
+        self.PSEUDO_COUNT = pseudo_count
+        self.learning_step_follow = learning_step_follow
         # Counters for blue/red choices
         self.total_count = 2 * self.PSEUDO_COUNT
         self.blue_count = self.PSEUDO_COUNT
@@ -150,11 +151,11 @@ class HistoryBasedAgent(Agent):
             if success and opponent_signal == final_choice:
                 # 成功跟随后，增加该颜色的偏好
                 if final_choice == "Blue":
-                    self.blue_count += 0.5  # 加强蓝色倾向
-                    self.total_count += 0.5
+                    self.blue_count += self.learning_step_follow  # 加强蓝色倾向
+                    self.total_count += self.learning_step_follow
                 else:
-                    self.blue_count += 0  # 加强红色倾向
-                    self.total_count += 0.5
+                    self.blue_count += 0  # 加强红色倾向 # This implies red_count effectively increases as total_count does but blue_count doesn't
+                    self.total_count += self.learning_step_follow
         
         # 记录交互结果
         self.interaction_history.append({
@@ -168,18 +169,23 @@ class HistoryBasedAgent(Agent):
 
 # Reward-Based Agent Implementation 
 class RewardBasedAgent(Agent):
-    def __init__(self, name: str):
+    def __init__(self, name: str, alpha: float = 0.2, beta: float = 0.2,
+                 initial_p_choice_blue: float = 0.5,
+                 initial_p_send_signal: float = 0.5,
+                 initial_p_signal_blue: float = 0.5,
+                 conflict_learning_boost: float = 1.5):
         super().__init__(name)
         # Learning rate parameters
-        self.ALPHA = 0.2  # Success update rate
-        self.BETA = 0.2   # Failure update rate
+        self.ALPHA = alpha
+        self.BETA = beta
+        self.conflict_learning_boost = conflict_learning_boost
         
         # Decision parameters
-        self.p_choice_blue = 0.5  # 选择Blue的概率
+        self.p_choice_blue = initial_p_choice_blue  # 选择Blue的概率
         
         # 发送信号的相关参数
-        self.p_send_signal = 0.5   # 发送信号的概率 (初始50%不发送信号)
-        self.p_signal_blue = 0.5   # 如果发送信号，选择Blue的概率 (初始蓝色和红色各25%)
+        self.p_send_signal = initial_p_send_signal   # 发送信号的概率 (初始50%不发送信号)
+        self.p_signal_blue = initial_p_signal_blue   # 如果发送信号，选择Blue的概率 (初始蓝色和红色各25%)
     
     def decide_signal(self, condition: SignalCondition) -> Optional[str]:
         if condition == SignalCondition.NO_SIGNAL:
@@ -268,7 +274,7 @@ class RewardBasedAgent(Agent):
                 # 如果冲突中选择成功，强化这种选择
                 if final_choice == own_signal:
                     # 强化依赖自己信号的倾向
-                    adj = self.ALPHA * 1.5  # 增强学习率
+                    adj = self.ALPHA * self.conflict_learning_boost  # 增强学习率
                     if own_signal == "Blue":
                         self.p_choice_blue = self.p_choice_blue + adj * (1 - self.p_choice_blue)
                     else:
@@ -291,18 +297,40 @@ class RewardBasedAgent(Agent):
 
 class Environment:
     def __init__(self, 
-                 num_agents: int, 
-                 signal_condition: SignalCondition, 
-                 strategy: Strategy):
-        self.num_agents = num_agents
+                 agent_configs: List[Dict[str, Any]],
+                 signal_condition: SignalCondition):
+        self.num_agents = len(agent_configs)
         self.signal_condition = signal_condition
-        self.strategy = strategy
+        # self.strategy is removed as agents can be heterogeneous
         
-        # Create agents based on the strategy
-        if strategy == Strategy.HISTORY_BASED:
-            self.agents = [HistoryBasedAgent(f"Agent {i+1}") for i in range(num_agents)]
-        else:  # REWARD_BASED
-            self.agents = [RewardBasedAgent(f"Agent {i+1}") for i in range(num_agents)]
+        self.agents: List[Agent] = []
+        for i, config in enumerate(agent_configs):
+            strategy_type = config["strategy_type"]
+            agent_params = config.get("params", {})
+            agent_name = f"Agent {i+1}"
+
+            if strategy_type == Strategy.HISTORY_BASED:
+                self.agents.append(
+                    HistoryBasedAgent(
+                        name=agent_name,
+                        pseudo_count=agent_params.get("pseudo_count", 2.0),
+                        learning_step_follow=agent_params.get("learning_step_follow", 0.5)
+                    )
+                )
+            elif strategy_type == Strategy.REWARD_BASED:
+                self.agents.append(
+                    RewardBasedAgent(
+                        name=agent_name,
+                        alpha=agent_params.get("alpha", 0.2),
+                        beta=agent_params.get("beta", 0.2),
+                        initial_p_choice_blue=agent_params.get("initial_p_choice_blue", 0.5),
+                        initial_p_send_signal=agent_params.get("initial_p_send_signal", 0.5),
+                        initial_p_signal_blue=agent_params.get("initial_p_signal_blue", 0.5),
+                        conflict_learning_boost=agent_params.get("conflict_learning_boost", 1.5)
+                    )
+                )
+            else:
+                raise ValueError(f"Unknown strategy_type: {strategy_type} for agent {i+1}")
         
         # Track rounds and convergence
         self.rounds = 0
@@ -471,13 +499,14 @@ class Environment:
             print(f"Did not converge after {self.rounds} rounds")
         
         # Print agent statistics based on strategy
-        if self.strategy == Strategy.HISTORY_BASED:
-            for agent in self.agents:
-                print(f"{agent.name}: Blue Ratio = {agent.get_blue_ratio():.2f}")
-        else:  # REWARD_BASED
-            for agent in self.agents:
-                print(f"{agent.name}: p_choice_blue = {agent.p_choice_blue:.2f}, " +
+        for agent in self.agents:
+            if isinstance(agent, HistoryBasedAgent):
+                print(f"{agent.name} (HistoryBased): Blue Ratio = {agent.get_blue_ratio():.2f}")
+            elif isinstance(agent, RewardBasedAgent):
+                print(f"{agent.name} (RewardBased): p_choice_blue = {agent.p_choice_blue:.2f}, " +
                       f"p_signal_blue = {agent.p_signal_blue:.2f}")
+            else:
+                print(f"{agent.name} (Unknown Strategy Type)")
 
 
 def run_all_scenarios(agent_sizes=[2, 3, 4, 6, 8, 10, 16, 20], 
@@ -487,19 +516,59 @@ def run_all_scenarios(agent_sizes=[2, 3, 4, 6, 8, 10, 16, 20],
     results = {}
     
     for signal_condition in SignalCondition:
-        for strategy in Strategy:
-            scenario_key = f"{signal_condition.value} - {strategy.value}"
+        for strategy in Strategy: # This loop will need to be replaced/rethought
+            # The concept of a single 'strategy' for a scenario is now more complex.
+            # This function will need to accept a list of experiment configurations.
+            # Each configuration will define num_agents, signal_condition, 
+            # and a list of agent_configs for heterogeneous agents.
+
+            # TEMPORARY: For now, let's assume a placeholder for how agent_configs would be generated
+            # This part needs to be redesigned based on how experiment configurations are structured.
+            # For example, an experiment config might specify:
+            # { 
+            #   "name": "Mixed_2HB_2RB_MandatorySignal",
+            #   "signal_condition": SignalCondition.MANDATORY_SIGNAL,
+            #   "agent_configs": [
+            #       {"strategy_type": Strategy.HISTORY_BASED, "params": {"pseudo_count": 2.0}},
+            #       {"strategy_type": Strategy.HISTORY_BASED, "params": {"pseudo_count": 3.0}},
+            #       {"strategy_type": Strategy.REWARD_BASED, "params": {"alpha": 0.1}},
+            #       {"strategy_type": Strategy.REWARD_BASED, "params": {"alpha": 0.2}},
+            #   ],
+            #   "runs_per_scenario": 20, # This might move into the experiment config too
+            #   "max_rounds": 100000    # Same for this
+            # }
+            # The outer loops for signal_condition and strategy would be replaced by iterating
+            # through a list of such experiment configuration dictionaries.
+
+            scenario_key = f"{signal_condition.value} - {strategy.value}" # This keying will also change
             results[scenario_key] = {}
             
-            print(f"\nRunning scenario: {scenario_key}")
+            print(f"\nRunning scenario: {scenario_key}") # Logging will need to reflect new structure
             
-            for size in agent_sizes:
+            for size in agent_sizes: # 'size' is now implicit in len(agent_configs) for an experiment
                 round_counts = []
                 convergence_counts = 0
                 blue_convergence = 0
                 
                 for run in range(runs_per_scenario):
-                    env = Environment(size, signal_condition, strategy)
+                    # env = Environment(size, signal_condition, strategy) # OLD WAY
+                    # NEW WAY would be something like:
+                    # current_experiment_config = ... (from the list of experiments)
+                    # agent_configs_for_run = current_experiment_config["agent_configs"]
+                    # signal_condition_for_run = current_experiment_config["signal_condition"]
+                    # env = Environment(agent_configs_for_run, signal_condition_for_run)
+                    
+                    # --- Placeholder for demonstration, this will not run correctly ---
+                    # This is just to make the file parsable, actual implementation of 
+                    # run_all_scenarios needs a complete redesign based on the new 
+                    # "list of experiment configurations" approach.
+                    if strategy == Strategy.HISTORY_BASED:
+                        ac_template = [{"strategy_type": Strategy.HISTORY_BASED, "params": {}} for _ in range(size)]
+                    else:
+                        ac_template = [{"strategy_type": Strategy.REWARD_BASED, "params": {}} for _ in range(size)]
+                    env = Environment(ac_template, signal_condition)
+                    # --- End Placeholder ---
+
                     rounds, converged, choice = env.run_simulation(max_rounds)
                     
                     round_counts.append(rounds)
