@@ -297,41 +297,41 @@ class RewardBasedAgent(Agent):
 
 class Environment:
     def __init__(self, 
-                 agent_configs: List[Dict[str, Any]],
+                 agent_configs: List[Dict[str, Any]], 
                  signal_condition: SignalCondition):
+        self.agent_configs = agent_configs
         self.num_agents = len(agent_configs)
         self.signal_condition = signal_condition
-        # self.strategy is removed as agents can be heterogeneous
         
         self.agents: List[Agent] = []
         for i, config in enumerate(agent_configs):
-            strategy_type = config["strategy_type"]
-            agent_params = config.get("params", {})
-            agent_name = f"Agent {i+1}"
+            agent_name = config.get("name", f"Agent {i+1}")
+            strategy_type = config.get("strategy_type")
+            params = config.get("params", {})
 
             if strategy_type == Strategy.HISTORY_BASED:
                 self.agents.append(
                     HistoryBasedAgent(
                         name=agent_name,
-                        pseudo_count=agent_params.get("pseudo_count", 2.0),
-                        learning_step_follow=agent_params.get("learning_step_follow", 0.5)
+                        pseudo_count=params.get("pseudo_count", 2.0),
+                        learning_step_follow=params.get("learning_step_follow", 0.5)
                     )
                 )
             elif strategy_type == Strategy.REWARD_BASED:
                 self.agents.append(
                     RewardBasedAgent(
                         name=agent_name,
-                        alpha=agent_params.get("alpha", 0.2),
-                        beta=agent_params.get("beta", 0.2),
-                        initial_p_choice_blue=agent_params.get("initial_p_choice_blue", 0.5),
-                        initial_p_send_signal=agent_params.get("initial_p_send_signal", 0.5),
-                        initial_p_signal_blue=agent_params.get("initial_p_signal_blue", 0.5),
-                        conflict_learning_boost=agent_params.get("conflict_learning_boost", 1.5)
+                        alpha=params.get("alpha", 0.2),
+                        beta=params.get("beta", 0.2),
+                        initial_p_choice_blue=params.get("initial_p_choice_blue", 0.5),
+                        initial_p_send_signal=params.get("initial_p_send_signal", 0.5),
+                        initial_p_signal_blue=params.get("initial_p_signal_blue", 0.5),
+                        conflict_learning_boost=params.get("conflict_learning_boost", 1.5)
                     )
                 )
             else:
-                raise ValueError(f"Unknown strategy_type: {strategy_type} for agent {i+1}")
-        
+                raise ValueError(f"Unknown strategy_type: {strategy_type} for agent {agent_name}")
+
         # Track rounds and convergence
         self.rounds = 0
         self.converged = False
@@ -347,11 +347,17 @@ class Environment:
         """Return rotation matchups"""
         n = self.num_agents
         
+        if n < 2: # Cannot form pairs if less than 2 agents
+            return []
+
         if n == 3:
             # Special handling for three-person groups
             sitting_out = self.rounds % 3  # Player sitting out in rotation
             agents_playing = [agent for i, agent in enumerate(self.agents) if i != sitting_out]
-            return [(agents_playing[0], agents_playing[1])]
+            if len(agents_playing) == 2: # Ensure we still have two players
+                 return [(agents_playing[0], agents_playing[1])]
+            else: # Should not happen if n=3, but as a safeguard
+                 return []
         
         elif n % 2 == 0:  # Even number of players
             # Use rotation matching algorithm
@@ -362,66 +368,91 @@ class Environment:
             # Round 3: (0,3), (1,2)
             # ...then cycle
             
-            rotation_step = (self.rounds - 1) % (n - 1)
+            # Adjust rounds for 0-based indexing for modulo operations if needed, but current logic seems fine
+            # The number of distinct sets of pairings is n-1
+            if n == 2: # Special case for 2 agents, always match them
+                return [(self.agents[0], self.agents[1])]
+
+            rotation_step = self.rounds % (n - 1) # self.rounds can start from 0 or 1. If 0, it's fine.
+                                                  # If rounds starts from 1, (self.rounds -1) % (n-1) is also common.
+                                                  # Let's assume self.rounds starts from 0 for simplicity here.
+            
             matchups = []
             
-            # First player fixed as 0
-            fixed_agent = self.agents[0]
+            # Create a temporary list of agents to permute, excluding the first agent.
+            # Agents from index 1 to n-1
+            rotating_agents = list(self.agents[1:]) 
             
-            # Calculate who matches with first player this round
-            # Rotating player numbers from 1 to n-1
-            rotation_idx = (rotation_step + 1) % (n - 1) + 1  # Get index from 1 to n-1
-            matchups.append((fixed_agent, self.agents[rotation_idx]))
+            # Apply the rotation to the list of rotating_agents
+            # For each step in rotation_step, the last element moves to the first position
+            for _ in range(rotation_step):
+                last_agent = rotating_agents.pop()
+                rotating_agents.insert(0, last_agent)
+
+            # Match the first agent (self.agents[0]) with the first agent in the now-rotated list
+            matchups.append((self.agents[0], rotating_agents[0]))
             
-            # Pair remaining players in sequence
-            remaining = [i for i in range(1, n) if i != rotation_idx]
-            for i in range(0, len(remaining), 2):
-                if i + 1 < len(remaining):
-                    matchups.append((self.agents[remaining[i]], self.agents[remaining[i+1]]))
+            # Pair up the rest of the agents in the rotated list
+            # These are now from rotating_agents[1] to rotating_agents[n-2]
+            for i in range(1, len(rotating_agents) // 2 + 1): # Iterate up to half the length of remaining agents
+                idx1 = 2 * i - 1
+                idx2 = 2 * i
+                if idx2 < len(rotating_agents) : # Ensure the second index is within bounds
+                    matchups.append((rotating_agents[idx1], rotating_agents[idx2]))
             
             return matchups
             
-        else:  # Odd number of players (except 3)
-            # Ensure each player sits out once every 3 rounds
-            sitting_out = self.rounds % n  # Player sitting out in rotation
-            active_agents = [agent for i, agent in enumerate(self.agents) if i != sitting_out]
+        else:  # Odd number of players (n > 3, since n=3 is handled)
+            # Each player sits out once in n rounds
+            sitting_out_idx = self.rounds % n
+            active_agents = [agent for i, agent in enumerate(self.agents) if i != sitting_out_idx]
             
-            # Match remaining even number of players in rotation
-            matchups = []
+            # Now we have an even number of active_agents (n-1 agents)
+            # We can apply the even number matching logic to active_agents
             n_active = len(active_agents)
-            
-            # If 2 players remain after sitting out, match them directly
+            if n_active < 2: return []
+
             if n_active == 2:
-                matchups.append((active_agents[0], active_agents[1]))
-            else:
-                # Otherwise use similar rotation algorithm as even case
-                rotation_step = (self.rounds - 1) % (n_active - 1)
-                
-                # First player fixed
-                fixed_agent = active_agents[0]
-                
-                # Calculate who matches with first player this round
-                rotation_idx = (rotation_step + 1) % (n_active - 1) + 1
-                matchups.append((fixed_agent, active_agents[rotation_idx]))
-                
-                # Pair remaining players in sequence
-                remaining = [i for i in range(1, n_active) if i != rotation_idx]
-                for i in range(0, len(remaining), 2):
-                    if i + 1 < len(remaining):
-                        matchups.append((active_agents[remaining[i]], active_agents[remaining[i+1]]))
+                 return [(active_agents[0], active_agents[1])]
+
+            matchups = []
+            # rotation_step for the active_agents group
+            # The number of distinct sets of pairings for n_active agents is n_active - 1
+            rotation_step = self.rounds % (n_active - 1) 
+
+            temp_rotating_agents = list(active_agents[1:])
+
+            for _ in range(rotation_step):
+                last_agent = temp_rotating_agents.pop()
+                temp_rotating_agents.insert(0, last_agent)
             
+            matchups.append((active_agents[0], temp_rotating_agents[0]))
+
+            for i in range(1, len(temp_rotating_agents) // 2 + 1):
+                idx1 = 2 * i - 1
+                idx2 = 2 * i
+                if idx2 < len(temp_rotating_agents):
+                    matchups.append((temp_rotating_agents[idx1], temp_rotating_agents[idx2]))
             return matchups
     
     def run_round(self):
         """Run a single round of interactions"""
-        self.rounds += 1
+        self.rounds += 1 # Increment rounds at the beginning
         
-        # 使用轮换匹配代替随机匹配
         matchups = self._get_rotation_matchups()
         
-        # Process each matchup
+        if not matchups: # If no matchups (e.g., less than 2 players, or error in logic)
+            # Potentially log this or handle as an empty round
+            # For stats, ensure no division by zero if interaction_stats expects updates
+            self.interaction_stats["success_rate"].append(0) # Or np.nan / None
+            self.interaction_stats["blue_choices"].append(0) # Or np.nan / None
+            self._check_convergence() # Still check convergence, maybe they converged by doing nothing
+            return
+
         successes = 0
         blue_count = 0
+        num_interactions = len(matchups)
+        num_choices_made = 0 # For blue_ratio calculation
         
         for agent1, agent2 in matchups:
             # Step 1: Agents decide signals
@@ -431,6 +462,7 @@ class Environment:
             # Step 2: Agents make final choices
             choice1 = agent1.decide_final_choice(signal2, signal1)
             choice2 = agent2.decide_final_choice(signal1, signal2)
+            num_choices_made +=2
             
             # Step 3: Determine success
             success = (choice1 == choice2)
@@ -448,19 +480,19 @@ class Environment:
             agent2.update(signal2, signal1, choice2, choice1, success)
         
         # Update statistics
-        if matchups:  # Avoid division by zero if no matchups
-            success_rate = successes / len(matchups)
-            blue_ratio = blue_count / (len(matchups) * 2)  # 2 agents per matchup
-            
-            # For odd number of players (except 3-person groups), adjust statistics based on sitting out
-            if self.num_agents % 2 != 0 and self.num_agents != 3:
-                # Since only (n-1)/2 pairs interact each round, overall efficiency is (n-1)/n
-                # To maintain fair comparison, multiply by adjustment factor 3/2
-                adjustment_factor = self.num_agents / (self.num_agents - 1) * (3/2)
-                success_rate *= adjustment_factor
-            
-            self.interaction_stats["success_rate"].append(success_rate)
-            self.interaction_stats["blue_choices"].append(blue_ratio)
+        current_success_rate = successes / num_interactions if num_interactions > 0 else 0
+        current_blue_ratio = blue_count / num_choices_made if num_choices_made > 0 else 0
+        
+        # The adjustment factor logic for odd players (except 3) was complex and
+        # might need re-evaluation or simplification if it was meant to normalize
+        # per-capita interaction rates. Given rotation, each player participates
+        # almost equally over time. For now, we'll record direct success rates.
+        # If self.num_agents % 2 != 0 and self.num_agents > 3:
+        #     adjustment_factor = self.num_agents / (self.num_agents - 1) 
+        #     current_success_rate *= adjustment_factor # This adjustment seems specific and may need review
+
+        self.interaction_stats["success_rate"].append(current_success_rate)
+        self.interaction_stats["blue_choices"].append(current_blue_ratio)
         
         # Check for convergence
         self._check_convergence()
@@ -468,24 +500,33 @@ class Environment:
     def _check_convergence(self):
         """Check if all agents have converged to the same choice"""
         # Only check every 10 rounds to avoid excessive checking
-        if self.rounds % 10 != 0:
-            return False
+        if self.rounds % 10 != 0: # Or self.rounds == 0 if rounds start from 0
+            return # False is implicitly returned by no explicit return
             
         # Get last choices of all agents who have made choices
+        if not self.agents: return # No agents, no convergence
+
         last_choices = [agent.choice_history[-1] for agent in self.agents 
-                        if agent.choice_history]
+                        if agent.choice_history] # Ensure choice_history is not empty
         
         # If all agents have made at least one choice and all choices are the same
-        if (len(last_choices) == self.num_agents and 
+        if (len(last_choices) == self.num_agents and self.num_agents > 0 and
             all(choice == last_choices[0] for choice in last_choices)):
             self.converged = True
             self.convergence_choice = last_choices[0]
-            return True
+            # return True # Not strictly necessary to return from here
         
-        return False
+        # return False # Not strictly necessary
     
     def run_simulation(self, max_rounds=100000):
         """Run the simulation until convergence or max rounds"""
+        self.rounds = 0 # Ensure rounds reset for a new simulation run
+        self.converged = False
+        self.convergence_choice = None
+        # Reset agent history for fresh simulation if env object is reused for multiple simulations
+        # This should ideally be done when creating a new Environment instance for each run.
+        # For now, assuming fresh Environment for each call to run_simulation.
+
         while not self.converged and self.rounds < max_rounds:
             self.run_round()
         
@@ -504,155 +545,203 @@ class Environment:
                 print(f"{agent.name} (HistoryBased): Blue Ratio = {agent.get_blue_ratio():.2f}")
             elif isinstance(agent, RewardBasedAgent):
                 print(f"{agent.name} (RewardBased): p_choice_blue = {agent.p_choice_blue:.2f}, " +
+                      f"p_send_signal = {agent.p_send_signal:.2f}, " + # Added p_send_signal for completeness
                       f"p_signal_blue = {agent.p_signal_blue:.2f}")
             else:
-                print(f"{agent.name} (Unknown Strategy Type)")
+                print(f"{agent.name} (Unknown Type): No specific stats available.")
 
 
-def run_all_scenarios(agent_sizes=[2, 3, 4, 6, 8, 10, 16, 20], 
-                      runs_per_scenario=20, 
-                      max_rounds=100000):
-    """Run simulations for all combinations of conditions and strategies"""
-    results = {}
+def run_all_scenarios(experiment_setups: List[Dict[str, Any]], 
+                      default_runs_per_setup=20, 
+                      default_max_rounds=100000):
+    """Run simulations for a defined list of experimental setups."""
+    all_results = {}
     
-    for signal_condition in SignalCondition:
-        for strategy in Strategy: # This loop will need to be replaced/rethought
-            # The concept of a single 'strategy' for a scenario is now more complex.
-            # This function will need to accept a list of experiment configurations.
-            # Each configuration will define num_agents, signal_condition, 
-            # and a list of agent_configs for heterogeneous agents.
+    for setup_config in experiment_setups:
+        setup_name = setup_config.get("name", f"Experiment_{len(all_results) + 1}")
+        agent_configs = setup_config.get("agent_configs")
+        signal_condition_enum = setup_config.get("signal_condition")
+        
+        # Ensure signal_condition is the Enum member, not just string value
+        if isinstance(signal_condition_enum, str):
+             try:
+                 signal_condition = SignalCondition(signal_condition_enum) # If names match enum values
+             except ValueError:
+                 # Or try matching by name if string is like "NO_SIGNAL"
+                 signal_condition = getattr(SignalCondition, signal_condition_enum.upper().replace(" ", "_"), None)
+                 if signal_condition is None:
+                     print(f"Warning: Could not parse signal_condition '{signal_condition_enum}' for setup '{setup_name}'. Skipping.")
+                     continue
+        elif isinstance(signal_condition_enum, SignalCondition):
+            signal_condition = signal_condition_enum
+        else:
+            print(f"Warning: Invalid signal_condition type for setup '{setup_name}'. Skipping.")
+            continue
 
-            # TEMPORARY: For now, let's assume a placeholder for how agent_configs would be generated
-            # This part needs to be redesigned based on how experiment configurations are structured.
-            # For example, an experiment config might specify:
-            # { 
-            #   "name": "Mixed_2HB_2RB_MandatorySignal",
-            #   "signal_condition": SignalCondition.MANDATORY_SIGNAL,
-            #   "agent_configs": [
-            #       {"strategy_type": Strategy.HISTORY_BASED, "params": {"pseudo_count": 2.0}},
-            #       {"strategy_type": Strategy.HISTORY_BASED, "params": {"pseudo_count": 3.0}},
-            #       {"strategy_type": Strategy.REWARD_BASED, "params": {"alpha": 0.1}},
-            #       {"strategy_type": Strategy.REWARD_BASED, "params": {"alpha": 0.2}},
-            #   ],
-            #   "runs_per_scenario": 20, # This might move into the experiment config too
-            #   "max_rounds": 100000    # Same for this
-            # }
-            # The outer loops for signal_condition and strategy would be replaced by iterating
-            # through a list of such experiment configuration dictionaries.
-
-            scenario_key = f"{signal_condition.value} - {strategy.value}" # This keying will also change
-            results[scenario_key] = {}
+        if not agent_configs:
+            print(f"Warning: No agent_configs provided for setup '{setup_name}'. Skipping.")
+            continue
             
-            print(f"\nRunning scenario: {scenario_key}") # Logging will need to reflect new structure
-            
-            for size in agent_sizes: # 'size' is now implicit in len(agent_configs) for an experiment
-                round_counts = []
-                convergence_counts = 0
-                blue_convergence = 0
-                
-                for run in range(runs_per_scenario):
-                    # env = Environment(size, signal_condition, strategy) # OLD WAY
-                    # NEW WAY would be something like:
-                    # current_experiment_config = ... (from the list of experiments)
-                    # agent_configs_for_run = current_experiment_config["agent_configs"]
-                    # signal_condition_for_run = current_experiment_config["signal_condition"]
-                    # env = Environment(agent_configs_for_run, signal_condition_for_run)
-                    
-                    # --- Placeholder for demonstration, this will not run correctly ---
-                    # This is just to make the file parsable, actual implementation of 
-                    # run_all_scenarios needs a complete redesign based on the new 
-                    # "list of experiment configurations" approach.
-                    if strategy == Strategy.HISTORY_BASED:
-                        ac_template = [{"strategy_type": Strategy.HISTORY_BASED, "params": {}} for _ in range(size)]
-                    else:
-                        ac_template = [{"strategy_type": Strategy.REWARD_BASED, "params": {}} for _ in range(size)]
-                    env = Environment(ac_template, signal_condition)
-                    # --- End Placeholder ---
+        num_agents = len(agent_configs) # Derived from configs
 
-                    rounds, converged, choice = env.run_simulation(max_rounds)
-                    
-                    round_counts.append(rounds)
-                    if converged:
-                        convergence_counts += 1
-                        if choice == "Blue":
-                            blue_convergence += 1
-                
-                # Calculate statistics
-                avg_rounds = sum(round_counts) / len(round_counts)
-                convergence_rate = convergence_counts / runs_per_scenario
-                blue_rate = blue_convergence / convergence_counts if convergence_counts > 0 else 0
-                
-                results[scenario_key][size] = {
-                    "avg_rounds": avg_rounds,
-                    "convergence_rate": convergence_rate,
-                    "blue_convergence_rate": blue_rate
-                }
-                
-                print(f"  Agent Size: {size}, Avg Rounds: {avg_rounds:.1f}, " +
-                      f"Convergence Rate: {convergence_rate:.2f}, " +
-                      f"Blue Convergence: {blue_rate:.2f}")
+        runs_for_this_setup = setup_config.get("runs_per_setup", default_runs_per_setup)
+        max_rounds_for_this_setup = setup_config.get("max_rounds", default_max_rounds)
+        
+        all_results[setup_name] = {
+            "config": { # Store config for reference
+                "agent_configs": agent_configs, # Could be verbose, consider summarizing if too large
+                "signal_condition": signal_condition.value,
+                "num_agents": num_agents,
+                "runs_per_setup": runs_for_this_setup,
+                "max_rounds": max_rounds_for_this_setup
+            },
+            "runs_data": [] # Detailed data for each run
+        }
+            
+        print(f"\nRunning Experiment Setup: {setup_name}")
+        print(f"  Signal Condition: {signal_condition.value}")
+        print(f"  Number of Agents: {num_agents}")
+        print(f"  Runs for this setup: {runs_for_this_setup}")
+
+        round_counts_all_runs = []
+        convergence_counts_total = 0
+        blue_convergence_total = 0
+        
+        for run_num in range(runs_for_this_setup):
+            print(f"  Starting run {run_num + 1}/{runs_for_this_setup}...")
+            # Critical: Create a new Environment instance for each run to ensure independence
+            env = Environment(agent_configs=agent_configs, 
+                              signal_condition=signal_condition)
+            
+            rounds, converged, choice = env.run_simulation(max_rounds_for_this_setup)
+            
+            run_data = {
+                "run_number": run_num + 1,
+                "rounds_to_convergence": rounds,
+                "converged": converged,
+                "convergence_choice": choice.value if choice else None # Store enum value
+            }
+            all_results[setup_name]["runs_data"].append(run_data)
+
+            round_counts_all_runs.append(rounds)
+            if converged:
+                convergence_counts_total += 1
+                if choice == "Blue": # Assuming choice is "Blue" or "Red" string
+                    blue_convergence_total += 1
+        
+        # Calculate summary statistics for this setup
+        avg_rounds = np.mean(round_counts_all_runs) if round_counts_all_runs else 0
+        convergence_rate = convergence_counts_total / runs_for_this_setup if runs_for_this_setup > 0 else 0
+        
+        # Rate of converging to "Blue", given that convergence occurred
+        blue_conv_rate_if_converged = blue_convergence_total / convergence_counts_total if convergence_counts_total > 0 else 0
+        
+        all_results[setup_name]["summary_stats"] = {
+            "avg_rounds_to_convergence": avg_rounds,
+            "convergence_rate": convergence_rate,
+            "blue_convergence_rate_given_convergence": blue_conv_rate_if_converged,
+            "total_runs": runs_for_this_setup,
+            "total_converged": convergence_counts_total,
+            "total_converged_blue": blue_convergence_total
+        }
+        
+        print(f"  Setup '{setup_name}' Summary: Avg Rounds: {avg_rounds:.1f}, " +
+              f"Convergence Rate: {convergence_rate:.2f}, " +
+              f"Blue Conv. (if conv.): {blue_conv_rate_if_converged:.2f}")
     
-    return results
+    return all_results
 
 
 def plot_results(results):
-    """Plot comparison charts of all scenarios"""
-    agent_sizes = sorted(list(next(iter(results.values())).keys()))
-    scenarios = list(results.keys())
+    """Plot comparison charts of all scenarios (NEEDS MAJOR REWORK for new results structure)"""
+    # This function needs a complete overhaul to work with the new `results` structure.
+    # The old structure was results[scenario_key][size][metric].
+    # The new structure is results[setup_name]["summary_stats"][metric].
+    # Plotting will need to consider how to group or compare different `setup_name`s.
+    # For example, if setups vary by 'num_agents' systematically, one could plot against that.
+    # Or, compare different strategies under the same num_agents and signal_condition.
     
-    # Plot rounds to convergence
-    plt.figure(figsize=(12, 8))
-    for scenario in scenarios:
-        rounds_list = [results[scenario][size]["avg_rounds"] for size in agent_sizes]
-        plt.plot(agent_sizes, rounds_list, marker='o', label=scenario)
+    print("Plotting results (Note: plot_results needs rework for new data structure).")
     
-    plt.xlabel("Number of Agents")
+    # Example: Plot average rounds to convergence for each setup if desired
+    # This is a very basic plot and might not be what's needed.
+    
+    setup_names = list(results.keys())
+    avg_rounds_list = [results[name]["summary_stats"]["avg_rounds_to_convergence"] for name in setup_names]
+    
+    if not setup_names:
+        print("No results to plot.")
+        return
+
+    plt.figure(figsize=(max(10, len(setup_names) * 0.5), 6)) # Dynamic width
+    plt.bar(setup_names, avg_rounds_list)
+    plt.xlabel("Experiment Setup Name")
     plt.ylabel("Average Rounds to Convergence")
-    plt.title("Convergence Rounds vs. Agent Population Size")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig("convergence_rounds.png")
+    plt.title("Average Convergence Rounds per Setup")
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+    plt.savefig("convergence_rounds_per_setup.png")
     plt.show()
-    
-    # Plot convergence rates
-    plt.figure(figsize=(12, 8))
-    for scenario in scenarios:
-        conv_rates = [results[scenario][size]["convergence_rate"] for size in agent_sizes]
-        plt.plot(agent_sizes, conv_rates, marker='o', label=scenario)
-    
-    plt.xlabel("Number of Agents")
-    plt.ylabel("Convergence Rate")
-    plt.title("Convergence Rate vs. Agent Population Size")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig("convergence_rates.png")
-    plt.show()
-    
-    # Plot blue convergence rates
-    plt.figure(figsize=(12, 8))
-    for scenario in scenarios:
-        blue_rates = [results[scenario][size]["blue_convergence_rate"] for size in agent_sizes]
-        plt.plot(agent_sizes, blue_rates, marker='o', label=scenario)
-    
-    plt.xlabel("Number of Agents")
-    plt.ylabel("Blue Convergence Rate")
-    plt.title("Blue Convergence Rate vs. Agent Population Size")
-    plt.legend()
-    plt.grid(True)
-    plt.savefig("blue_convergence_rates.png")
-    plt.show()
+    plt.close()
+
+    # Further plots (convergence rate, blue convergence rate) would follow a similar pattern
+    # but require careful thought on how to present them meaningfully given the new structure.
+    # For instance, if you have setups specifically designed to test N_agents,
+    # you'd need to extract that N from the setup_name or config to plot against it.
 
 
 def main():
-    # Run simulations for all scenarios
-    print("Running all scenarios...")
-    results = run_all_scenarios()
+    # This main is for testing environment.py directly.
+    # It needs to be updated to create example `experiment_setups`.
+    print("Running example with heterogeneous agents in environment.py main...")
+
+    # Example Experiment Setups
+    experiment_setups_example = [
+        {
+            "name": "2_Hist_vs_Rew_Mandatory",
+            "signal_condition": SignalCondition.MANDATORY_SIGNAL,
+            "runs_per_setup": 5, # Fewer runs for quick test
+            "max_rounds": 50000,
+            "agent_configs": [
+                {"strategy_type": Strategy.HISTORY_BASED, "name": "HistAgent1", "params": {"pseudo_count": 1.0}},
+                {"strategy_type": Strategy.REWARD_BASED, "name": "RewAgent1", "params": {"alpha": 0.1, "beta": 0.1}},
+            ]
+        },
+        {
+            "name": "3_All_History_Optional_Varied",
+            "signal_condition": SignalCondition.OPTIONAL_SIGNAL,
+            "runs_per_setup": 5,
+            "max_rounds": 50000,
+            "agent_configs": [
+                {"strategy_type": Strategy.HISTORY_BASED, "name": "HistAgent_A", "params": {"pseudo_count": 1.0, "learning_step_follow": 0.3}},
+                {"strategy_type": Strategy.HISTORY_BASED, "name": "HistAgent_B", "params": {"pseudo_count": 3.0, "learning_step_follow": 0.7}},
+                {"strategy_type": Strategy.HISTORY_BASED, "name": "HistAgent_C"}, # Uses defaults
+            ]
+        },
+        {
+            "name": "4_Mixed_NoSignal",
+            "signal_condition": SignalCondition.NO_SIGNAL,
+            "runs_per_setup": 3,
+            "max_rounds": 30000,
+            "agent_configs": [
+                {"strategy_type": Strategy.HISTORY_BASED, "name": "H1"},
+                {"strategy_type": Strategy.REWARD_BASED, "name": "R1"},
+                {"strategy_type": Strategy.HISTORY_BASED, "name": "H2", "params": {"pseudo_count": 0.5}},
+                {"strategy_type": Strategy.REWARD_BASED, "name": "R2", "params": {"alpha": 0.3}},
+            ]
+        }
+    ]
     
-    # Plot comparison charts
-    print("\nPlotting results...")
-    plot_results(results)
+    results = run_all_scenarios(
+        experiment_setups=experiment_setups_example,
+        default_runs_per_setup=10, # Default if not specified in setup
+        default_max_rounds=100000
+    )
     
-    print("\nSimulation complete!")
+    print("\nPlotting results (example)...")
+    plot_results(results) # Will use the basic bar plot for now
+    
+    print("\nSimulation examples complete!")
 
 
 if __name__ == "__main__":
